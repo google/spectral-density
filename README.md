@@ -1,29 +1,23 @@
 # Large Scale Spectral Density Estimation for Deep Neural Networks
 
-This repository contains the distributed TensorFlow implementation of stochastic Lanczos
-Quadrature for deep neural networks as used and described in [our paper](https://arxiv.org/abs/1901.10159).
+This repository contains two implementations of the stochastic Lanczos Quadrature algorithm for deep neural networks as used and described in [our paper](https://arxiv.org/abs/1901.10159).
 
-## Training a CIFAR-10 model
-1. Grab the [CIFAR-10 binary dataset](https://www.cs.toronto.edu/~kriz/cifar.html).
-2. Run training via `python experiments/cifar_train.py --train_data_path=<glob_of_data>`.
-3. Run eval via `python experiments/cifar_eval.py --eval_data_path=<glob_of_data>`.
+To run the example notebooks, please first `pip install tensorflow_datasets`.
 
+## TensorFlow Implementation
+The main class that runs distributed Lanczos algorithm is [`LanczosExperiment`](https://github.com/google/spectral-density/blob/f0d3f1446bb1c200d9200cbdc67407e3f148ccba/tf/lanczos_experiment.py#L33). The Jupyter [notebook](https://github.com/google/spectral-density/blob/master/tf/mnist_spectral_density.ipynb) demonstrates how to use this class. 
 
-## Running distributed Lanczos algorithm
-After the training jobs has written its checkpoints, we run `cifar_train.py` again, this time in `--train_mode=lanczos`. This also has the side effect of turning off some options that make the forward pass non-deterministic (`--shuffle_each_epoch=false` and `--augment=false`).
+In addition to single machine (potentially multiple-GPU setups), this implementation is also suitable for multi-GPU multi-worker setups. The crucial step is manually partitioning the input data across the available GPUs.
 
-To run Lanczos on a checkpoint generated during training, we use `--checkpoint_to_load=...`. Our code should work as is in a distributed multi-GPU worker setting. If there are multiple GPU workers, then setting `--partition_data_per_worker` along with specifying `--task=<worker_id>` will speed the computation dramatically. Unfortunately, we do not currently have a multi-tower implementation, but we would love to work with you on one.
+The algorithm outputs two numpy files: `tridiag_1` and `lanczos_vec_1` which are the tridiagonal matrix and Lanczos vectors. The tridiagonal matrix can then be used to generate spectral densities using [`tridiag_to_density`](https://github.com/google/spectral-density/blob/f0d3f1446bb1c200d9200cbdc67407e3f148ccba/jax/density.py#L120).
 
-This process writes out two crucial numpy files: `tridiag_1` and `lanczos_vec_1` in the new `--train_log_dir=<path>` (Be sure to change this for the Lanczos phase if you don't want your checkpoints overwritten!). Note that we have very specific naming conventions for this flag to make it compatible with density calculator Jupyter notebook.
+## Jax Implementation
+The Jax version is fantastic for fast experimentation (especially in conjunction with [trax](https://github.com/tensorflow/tensor2tensor/tree/master/tensor2tensor/trax). The Jupyter [notebook](https://github.com/google/spectral-density/blob/f0d3f1446bb1c200d9200cbdc67407e3f148ccba/jax/mnist_hessian_example.ipynb) demonstrates how to run Lanczos in Jax.
 
+The main function is [`lanczos_alg`](https://github.com/google/spectral-density/blob/f0d3f1446bb1c200d9200cbdc67407e3f148ccba/jax/lanczos.py#L27), which returns a tridiagonal matrix and Lanczos vectors. The tridiagonal matrix can then be used to generate spectral densities using [`tridiag_to_density`](https://github.com/google/spectral-density/blob/f0d3f1446bb1c200d9200cbdc67407e3f148ccba/jax/density.py#L120).
 
-### Lanczos Parameters
-Around 80-90 Lanczos_steps are certainly enough for most
-models; we tend to set `--lanczos_draws=1` to enable parallelism over many
-instances of the Lanczos job.
-
-## Generating spectral densities
-We run the Jupyter notebook to compute the spectral densities using the `tridiag_1` and `lanczos_vec_1` files computed earlier (we actually use this notebook to compute the density along an entire trajectory of checkpoints).
-
+## Differences between implementations
+1. The TensorFlow version performs Hessian-vector product accumulation and the actual Lanczos algorithm in float64, whereas the Jax version performs all calculation in float32.
+2. The TensorFlow version targets multi-worker distributed setups, whereas the Jax version targets single worker (potentially multi-GPU) setups.
 
 This is not an official Google product.
