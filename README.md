@@ -12,7 +12,7 @@ In addition to single machine (potentially multiple-GPU setups), this implementa
 The algorithm outputs two numpy files: `tridiag_1` and `lanczos_vec_1` which are the tridiagonal matrix and Lanczos vectors. The tridiagonal matrix can then be used to generate spectral densities using [`tridiag_to_density`](https://github.com/google/spectral-density/blob/f0d3f1446bb1c200d9200cbdc67407e3f148ccba/jax/density.py#L120).
 
 ## Jax Implementation (by [Justin Gilmer](https://github.com/jmgilmer))
-The Jax version is fantastic for fast experimentation (especially in conjunction with [trax](https://github.com/tensorflow/tensor2tensor/tree/master/tensor2tensor/trax). The Jupyter [notebook](https://github.com/google/spectral-density/blob/f0d3f1446bb1c200d9200cbdc67407e3f148ccba/jax/mnist_hessian_example.ipynb) demonstrates how to run Lanczos in Jax.
+The Jax version is fantastic for fast experimentation (especially in conjunction with [trax](https://github.com/tensorflow/tensor2tensor/tree/master/tensor2tensor/trax)). The Jupyter [notebook](https://github.com/google/spectral-density/blob/f0d3f1446bb1c200d9200cbdc67407e3f148ccba/jax/mnist_hessian_example.ipynb) demonstrates how to run Lanczos in Jax.
 
 The main function is [`lanczos_alg`](https://github.com/google/spectral-density/blob/f0d3f1446bb1c200d9200cbdc67407e3f148ccba/jax/lanczos.py#L27), which returns a tridiagonal matrix and Lanczos vectors. The tridiagonal matrix can then be used to generate spectral densities using [`tridiag_to_density`](https://github.com/google/spectral-density/blob/f0d3f1446bb1c200d9200cbdc67407e3f148ccba/jax/density.py#L120).
 
